@@ -261,8 +261,32 @@ This is a gateway between MQTT and the busserver.c. With busserver running on th
 ```
 docker build . -t aiphone
 docker run -it aiphone -h # prints help
-docker run --rm --network=host -p 23569:23569/udp aiphone -v
 docker run --rm --network=host aiphone -m mqtt.host -u user -p pass -a 8 -l 8 -r 25:2 25:3 -b intercom_ip -v
+```
+
+MQTT integration in home assistant should configure the components automatically.
+
+#### Example event
+```
+event_type: state_changed
+data:
+  entity_id: event.aiphone_intercom_incoming_call
+  new_state:
+    entity_id: event.aiphone_intercom_incoming_call
+    state: "2025-12-25T09:16:00.075+00:00"
+    attributes:
+      event_types:
+        - ring
+      event_type: ring
+      to_type: RESIDENT
+      from_type: ENTRANCE
+      from_address: 2
+      to_address: 8
+      device_class: doorbell
+      friendly_name: Aiphone Intercom Incoming Call
+    last_changed: "2025-12-25T09:16:00.076048+00:00"
+    last_reported: "2025-12-25T09:16:00.076048+00:00"
+    last_updated: "2025-12-25T09:16:00.076048+00:00"
 ```
 ---
 
