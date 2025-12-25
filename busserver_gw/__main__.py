@@ -11,7 +11,7 @@ import time
 import json
 from . import Packet, MqttClient, AddressType, CommandType
 logging.basicConfig()
-logging.getLogger().setLevel(logging.DEBUG)
+logging.getLogger().setLevel(logging.INFO)
 
 parser = argparse.ArgumentParser(
                     prog='busserver-gw',
@@ -26,10 +26,13 @@ parser.add_argument('-a','--resident-address', type=int, help="Resident Address"
 parser.add_argument('-e','--entrance', nargs="+", type=int, help="Simple same bus entrance IDs 1-15", default=[])
 parser.add_argument('-l','--lifts', nargs="+", type=int, help="Lift Control IDs", default=[])
 parser.add_argument('-r','--remote-entrance', nargs="+", type=str, default=[], help="Remote entrances [section:entranceid] eg: 25:1. Generally only shared zones will work (25-31)")
+parser.add_argument('-v','--verbose', help="MQTT Host", action="store_true")
 
 
 args = parser.parse_args()
 
+if args.verbose == True:
+    logging.getLogger().setLevel(logging.DEBUG)
 
 server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
@@ -39,7 +42,7 @@ server.settimeout(0.01)
 
 
 def unlock_entrance(entrance_id: int):
-    logging.debug(f"unlock entrance: {entrance_id}")
+    logging.info(f"unlock entrance: {entrance_id}")
     packets = [
         Packet(cmd=CommandType.LINE_REQUEST_2, to_type=AddressType.RESIDENT, to_address=0xf, from_type=AddressType.BROADCAST, from_address=1, header=3),
         Packet(cmd=CommandType.REQ_TALK, to_type=AddressType.ENTRANCE, to_address=entrance_id, from_type=AddressType.BROADCAST, from_address=1),
@@ -108,7 +111,7 @@ def unlock_remote_entrance(section: int,entrance_id: int):
 last_seen_entrance = 0
 
 def unlock():
-    logging.debug(f"unlock in progress: {last_seen_entrance}")
+    logging.info(f"unlock in progress: {last_seen_entrance}")
     packets = [
         Packet(cmd=CommandType.UNLOCK_PRESS, to_type=AddressType.ENTRANCE, to_address=last_seen_entrance, from_type=AddressType.RESIDENT, from_address=args.resident_address),
         Packet(cmd=CommandType.UNLOCK_RELEASE, to_type=AddressType.ENTRANCE, to_address=last_seen_entrance, from_type=AddressType.RESIDENT, from_address=args.resident_address),
@@ -157,8 +160,11 @@ while True:
             continue
 
                 
-        
-        logging.debug(packet)
+        if packet.to_address == args.resident_address and packet.to_type == AddressType.RESIDENT:
+            logging.info(packet)
+        else:
+            logging.debug(packet)
+            
         if packet.cmd in [
             CommandType.LINE_REQUEST,
             CommandType.START_CALL_1, 

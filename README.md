@@ -254,6 +254,16 @@ Tries to get the H264 data and dump it to a UDP port which ffmpeg can play. Curr
 
 ![Example ffmpeg showing intercome](8bd4387f4d450e63.jpg)
 
+
+#### busserver_gw
+This is a gateway between MQTT and the busserver.c. With busserver running on the itercom this tool can be run on the local network on another machine that bridges the busserver packets to home assistant mqtt.
+
+```
+docker build . -t aiphone
+docker run -it aiphone -h # prints help
+docker run --rm --network=host -p 23569:23569/udp aiphone -v
+docker run --rm --network=host aiphone -m mqtt.host -u user -p pass -a 8 -l 8 -r 25:2 25:3 -b intercom_ip -v
+```
 ---
 
 [^1]: [GT System Installation Manual, 6-2 Checking "ground fault" with tester](https://www.aiphone.net/support/software-documents/download/gt/manual/en/GT_System_Standard_Expanded_%20System_%20Installation_Manual_EN.pdf)

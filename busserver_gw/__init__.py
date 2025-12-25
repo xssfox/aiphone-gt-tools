@@ -26,14 +26,14 @@ class MqttClient():
     def connect_mqtt(self, broker, port, username, password):
         def on_connect(client, userdata, flags, rc):
             if rc == 0:
-                logging.debug("Connected to MQTT Broker!")
+                logging.info("Connected to MQTT Broker!")
                 self.send_discovery() # TODO send often
                 client.subscribe(f"aiphone-{self.resident_address}/command")
             else:
-                logging.debug("Failed to connect, return code %d\n", rc)
+                logging.error("Failed to connect, return code %d\n", rc)
         # Set Connecting Client ID
         client_id = f'aiphone-mqtt-{random.randint(0, 1000)}'
-        self.client = mqtt_client.Client(client_id)
+        self.client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION1, client_id)
 
 
         self.client.username_pw_set(username, password)
