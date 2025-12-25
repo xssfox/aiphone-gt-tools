@@ -263,20 +263,20 @@ class Packet:
         return out
 
 
-def decode(data: bytes) -> Packet:
-    out = Packet()
-    parameter_length = data[0] >> 6
+    def from_bytes(data: bytes):
+        out = Packet()
+        parameter_length = data[0] >> 6
 
-    out.header = data[0] >> 4
+        out.header = data[0] >> 4
 
-    out.to_type =  AddressType(data[0] & 0xf)
-    out.to_address = data[1]
-    
-    out.from_type = AddressType(data[2] & 0xf)
-    out.from_address = data[3]
+        out.to_type =  AddressType(data[0] & 0xf)
+        out.to_address = data[1]
+        
+        out.from_type = AddressType(data[2] & 0xf)
+        out.from_address = data[3]
 
-    out.cmd = CommandType(data[4])
+        out.cmd = CommandType(data[4])
 
-    out.parameters = data[5:5+parameter_length]
+        out.parameters = data[5:5+parameter_length]
 
-    return out
+        return out

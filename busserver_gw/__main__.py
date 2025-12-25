@@ -9,7 +9,7 @@ import argparse
 import random
 import time
 import json
-from . import Packet, MqttClient, AddressType, CommandType, decode
+from . import Packet, MqttClient, AddressType, CommandType
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -34,13 +34,8 @@ args = parser.parse_args()
 server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-server.bind(('', 23569))
+server.bind(('', 23569)) # This should be 4444 but there's a bug in busserver....
 server.settimeout(0.01)
-
-# TODO
-# - add a generic unlock button
-# - error handling parsing packets
-# - move .decode into Packet()
 
 
 def unlock_entrance(entrance_id: int):
@@ -155,7 +150,12 @@ while True:
         if len(message) == 24: # TODO WE CAN CHECK FOR ACKS HERE
             message = message[13:]
         logging.debug(message.hex())
-        packet = decode(message)
+        try:
+            packet = Packet.from_bytes(message)
+        except:
+            logging.error(f"Error parsing packet: {message.hex()}")
+            continue
+
                 
         
         logging.debug(packet)
