@@ -161,7 +161,7 @@ class MqttClient():
                 "command_topic": f"aiphone-{self.resident_address}/command"
             }            
         self.client.publish(TOPIC,json.dumps(config),2,True)
-    def on_disconnect(self, userdata, rc):
+    def on_disconnect(self,client, userdata, rc):
         logging.error("Disconnected from MQTT")
         while 1:
             try:
