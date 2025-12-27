@@ -49,7 +49,7 @@ def unlock_entrance(entrance_id: int):
     ]
     for packet in packets:
         server.sendto(packet.encode(),(args.busserver_host, 4444))
-        time.sleep(0.1)
+        time.sleep(0.2)
     time.sleep(1)
 
     packets = [
@@ -58,7 +58,7 @@ def unlock_entrance(entrance_id: int):
     ]
     for packet in packets:
         server.sendto(packet.encode(),(args.busserver_host, 4444))
-        time.sleep(0.2)
+        time.sleep(0.3)
     time.sleep(0.5)
     
     packets = [
@@ -67,7 +67,7 @@ def unlock_entrance(entrance_id: int):
     ]
     for packet in packets:
         server.sendto(packet.encode(),(args.busserver_host, 4444))
-        time.sleep(0.1)
+        time.sleep(0.2)
 def trigger_lift_control(lift_id: int):
     packet = Packet(
         to_type=AddressType.BROADCAST, 
@@ -89,7 +89,7 @@ def unlock_remote_entrance(section: int,entrance_id: int):
     ]
     for packet in packets:
         server.sendto(packet.encode(),(args.busserver_host, 4444))
-        time.sleep(0.1)
+        time.sleep(0.2)
     time.sleep(0.7)
 
     packets = [
@@ -106,7 +106,7 @@ def unlock_remote_entrance(section: int,entrance_id: int):
     ]
     for packet in packets:
         server.sendto(packet.encode(),(args.busserver_host, 4444))
-        time.sleep(0.1)
+        time.sleep(0.2)
 
 last_seen_entrance = 0
 
