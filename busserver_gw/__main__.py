@@ -46,7 +46,7 @@ def unlock_entrance(entrance_id: int):
     ]
     for packet in packets:
         tcp_socket.send(packet.encode()) 
-        time.sleep(0.2)
+        time.sleep(0.3)
     time.sleep(1)
 
     packets = [
@@ -55,7 +55,7 @@ def unlock_entrance(entrance_id: int):
     ]
     for packet in packets:
         tcp_socket.send(packet.encode()) 
-        time.sleep(0.3)
+        time.sleep(0.4)
     time.sleep(0.5)
     
     packets = [
@@ -64,7 +64,7 @@ def unlock_entrance(entrance_id: int):
     ]
     for packet in packets:
         tcp_socket.send(packet.encode()) 
-        time.sleep(0.2)
+        time.sleep(0.3)
 def trigger_lift_control(lift_id: int):
     packet = Packet(
         to_type=AddressType.BROADCAST, 
@@ -86,8 +86,8 @@ def unlock_remote_entrance(section: int,entrance_id: int):
     ]
     for packet in packets:
         tcp_socket.send(packet.encode()) 
-        time.sleep(0.2)
-    time.sleep(0.7)
+        time.sleep(0.3)
+    time.sleep(1)
 
     packets = [
         Packet(cmd=CommandType.UNLOCK_PRESS, to_type=AddressType.ENTRANCE, to_address=1, from_type=AddressType.SECURITY, from_address=2),
@@ -95,7 +95,7 @@ def unlock_remote_entrance(section: int,entrance_id: int):
     ]
     for packet in packets:
         tcp_socket.send(packet.encode()) 
-        time.sleep(0.2)
+        time.sleep(0.3)
     time.sleep(0.5)
     
     packets = [
@@ -103,7 +103,7 @@ def unlock_remote_entrance(section: int,entrance_id: int):
     ]
     for packet in packets:
         tcp_socket.send(packet.encode()) 
-        time.sleep(0.2)
+        time.sleep(0.3)
 
 last_seen_entrance = 0
 
@@ -115,7 +115,7 @@ def unlock():
     ]
     for packet in packets:
         tcp_socket.send(packet.encode()) 
-        time.sleep(0.2)
+        time.sleep(0.3)
     
     
 
