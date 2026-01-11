@@ -147,9 +147,9 @@ CALL_TYPES = [
 while True:
     try:
         message = tcp_socket.recv(24)
+        logging.debug(message.hex())
         if len(message) == 24: # TODO WE CAN CHECK FOR ACKS HERE
             message = message[13:]
-        logging.debug(message.hex())
         try:
             packet = Packet.from_bytes(message)
         except:
