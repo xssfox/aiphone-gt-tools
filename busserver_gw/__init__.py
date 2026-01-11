@@ -49,6 +49,7 @@ class MqttClient():
         print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
         if msg.topic == f"aiphone-{self.resident_address}/command":
             data = json.loads(msg.payload.decode())
+            self.client.publish(f"aiphone-{self.resident_address}/availability","offline",2,True)
             if data['type'] == "entrance":
                 self.entrance_callback(int(data['entrance']))
             if data['type'] == "lift":
@@ -57,7 +58,7 @@ class MqttClient():
                 self.remote_callback(int(data['section']),int(data['entrance']))
             if data['type'] == 'unlock':
                 self.unlock_callback()
-
+            self.client.publish(f"aiphone-{self.resident_address}/availability","online",2,True)
 
     def send_update(self, lineinuse):
         TOPIC = f"aiphone-{self.resident_address}/state"
@@ -119,7 +120,8 @@ class MqttClient():
                         "payload_press": json.dumps({
                             "type": "unlock"
                         }),
-                        "command_topic": f"aiphone-{self.resident_address}/command"
+                        "command_topic": f"aiphone-{self.resident_address}/command",
+                        "availability_topic": f"aiphone-{self.resident_address}/availability",
                     
                     },
                 },
@@ -135,7 +137,8 @@ class MqttClient():
                     "type": "entrance",
                     "entrance": f"{entrance}"
                 }),
-                "command_topic": f"aiphone-{self.resident_address}/command"
+                "command_topic": f"aiphone-{self.resident_address}/command",
+                "availability_topic": f"aiphone-{self.resident_address}/availability",
             }
         for lifts in self.lifts:
             config["cmps"][f"lift_{lifts}"] = {
@@ -146,7 +149,8 @@ class MqttClient():
                     "type": "lift",
                     "lift": f"{lifts}"
                 }),
-                "command_topic": f"aiphone-{self.resident_address}/command"
+                "command_topic": f"aiphone-{self.resident_address}/command",
+                "availability_topic": f"aiphone-{self.resident_address}/availability",
             }
         for remote_entrance in self.remote_entrance:
             config["cmps"][f"remote_{remote_entrance}"] = {
@@ -158,9 +162,11 @@ class MqttClient():
                     "section": f"{remote_entrance.split(':')[0]}",
                     "entrance": f"{remote_entrance.split(':')[1]}",
                 }),
-                "command_topic": f"aiphone-{self.resident_address}/command"
+                "command_topic": f"aiphone-{self.resident_address}/command",
+                "availability_topic": f"aiphone-{self.resident_address}/availability",
             }            
         self.client.publish(TOPIC,json.dumps(config),2,True)
+        self.client.publish(f"aiphone-{self.resident_address}/availability","online",2,True)
     def on_disconnect(self,client, userdata, rc):
         logging.error("Disconnected from MQTT")
         while 1:

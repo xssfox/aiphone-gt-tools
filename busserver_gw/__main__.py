@@ -34,12 +34,9 @@ args = parser.parse_args()
 if args.verbose == True:
     logging.getLogger().setLevel(logging.DEBUG)
 
-server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-server.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-server.bind(('', 23569)) # This should be 4444 but there's a bug in busserver....
-server.settimeout(0.01)
-
+tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+tcp_client = tcp_socket.connect((args.busserver_host, 4444))
+tcp_socket.settimeout(0.01)
 
 def unlock_entrance(entrance_id: int):
     logging.info(f"unlock entrance: {entrance_id}")
@@ -48,7 +45,7 @@ def unlock_entrance(entrance_id: int):
         Packet(cmd=CommandType.REQ_TALK, to_type=AddressType.ENTRANCE, to_address=entrance_id, from_type=AddressType.BROADCAST, from_address=1),
     ]
     for packet in packets:
-        server.sendto(packet.encode(),(args.busserver_host, 4444))
+        tcp_socket.send(packet.encode()) 
         time.sleep(0.2)
     time.sleep(1)
 
@@ -57,7 +54,7 @@ def unlock_entrance(entrance_id: int):
         Packet(cmd=CommandType.UNLOCK_RELEASE, to_type=AddressType.ENTRANCE, to_address=entrance_id, from_type=AddressType.BROADCAST, from_address=1),
     ]
     for packet in packets:
-        server.sendto(packet.encode(),(args.busserver_host, 4444))
+        tcp_socket.send(packet.encode()) 
         time.sleep(0.3)
     time.sleep(0.5)
     
@@ -66,7 +63,7 @@ def unlock_entrance(entrance_id: int):
         Packet(cmd=CommandType.HANG_UP, to_type=AddressType.RESIDENT, to_address=0xf, from_type=AddressType.BROADCAST, from_address=1, header=3),
     ]
     for packet in packets:
-        server.sendto(packet.encode(),(args.busserver_host, 4444))
+        tcp_socket.send(packet.encode()) 
         time.sleep(0.2)
 def trigger_lift_control(lift_id: int):
     packet = Packet(
@@ -77,7 +74,7 @@ def trigger_lift_control(lift_id: int):
         cmd=CommandType.LIFT_CONTROL,
         parameters=lift_id.to_bytes(length=2,byteorder='big')
     ).encode()
-    server.sendto(packet,(args.busserver_host, 4444))
+    tcp_socket.send(packet) 
 
 def unlock_remote_entrance(section: int,entrance_id: int):
     logging.debug(f"unlock remote entrance: {section} {entrance_id}")
@@ -88,7 +85,7 @@ def unlock_remote_entrance(section: int,entrance_id: int):
         Packet(cmd=CommandType.REMOTE_SET_ADDRESS_3, parameters=f";{entrance_id}".encode(), to_type=AddressType.ENTRANCE, to_address=1, from_type=AddressType.SECURITY, from_address=2),
     ]
     for packet in packets:
-        server.sendto(packet.encode(),(args.busserver_host, 4444))
+        tcp_socket.send(packet.encode()) 
         time.sleep(0.2)
     time.sleep(0.7)
 
@@ -97,7 +94,7 @@ def unlock_remote_entrance(section: int,entrance_id: int):
         Packet(cmd=CommandType.UNLOCK_RELEASE, to_type=AddressType.ENTRANCE, to_address=1, from_type=AddressType.SECURITY, from_address=2),
     ]
     for packet in packets:
-        server.sendto(packet.encode(),(args.busserver_host, 4444))
+        tcp_socket.send(packet.encode()) 
         time.sleep(0.2)
     time.sleep(0.5)
     
@@ -105,7 +102,7 @@ def unlock_remote_entrance(section: int,entrance_id: int):
         Packet(cmd=CommandType.END_CALL_1, to_type=AddressType.ENTRANCE, to_address=1, from_type=AddressType.SECURITY, from_address=2),
     ]
     for packet in packets:
-        server.sendto(packet.encode(),(args.busserver_host, 4444))
+        tcp_socket.send(packet.encode()) 
         time.sleep(0.2)
 
 last_seen_entrance = 0
@@ -117,7 +114,7 @@ def unlock():
         Packet(cmd=CommandType.UNLOCK_RELEASE, to_type=AddressType.ENTRANCE, to_address=last_seen_entrance, from_type=AddressType.RESIDENT, from_address=args.resident_address),
     ]
     for packet in packets:
-        server.sendto(packet.encode(),(args.busserver_host, 4444))
+        tcp_socket.send(packet.encode()) 
         time.sleep(0.2)
     
     
@@ -149,7 +146,7 @@ CALL_TYPES = [
 
 while True:
     try:
-        message, address = server.recvfrom(24)
+        message = tcp_socket.recv(24)
         if len(message) == 24: # TODO WE CAN CHECK FOR ACKS HERE
             message = message[13:]
         logging.debug(message.hex())
