@@ -29,10 +29,12 @@ struct timespec tp_current;
 int pid_to_hook;
 int fd;
 char counter;
-struct pollfd sfds[1];
+struct pollfd sfds[2];
 
 struct sockaddr_in si_me, si_other;
 int s, i, slen = sizeof(si_other) , recv_len;
+int tcp;
+int connfd;
 
 struct sockaddr_in si_broadcast;
 struct in_addr broadcast_address;
@@ -65,6 +67,9 @@ int get_responses(){
             // send to udp
             int err;
             err = sendto(s, &data, sizeof(data), 0, (struct sockaddr*) &si_broadcast, slen);
+            if (sfds[1].events == POLLIN) {
+                write(sfds[1].fd,&data, sizeof(data));
+            }
             if (err == -1)
             {
                 printf("failed to send to udp: %d\n", errno);
@@ -97,6 +102,9 @@ int get_responses(){
             printf("\n");
 
             err = sendto(s, &data, sizeof(data), 0, (struct sockaddr*) &si_broadcast, slen);
+            if (sfds[1].events == POLLIN) {
+                write(sfds[1].fd,&data, sizeof(data));
+            }
             if (err == -1)
             {
                 printf("failed to send to udp: %d\n", errno);
@@ -181,7 +189,7 @@ int main(int argc, char *argv[])
 
     if (argc != 2)
     {
-        printf("Not enough args. Usage ./busserver {PID}");
+        printf("Not enough args. Usage ./hookioctl {PID}");
         return 1;
     }
 
@@ -198,17 +206,22 @@ int main(int argc, char *argv[])
 
     if (-1 == (s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)))
 	{
-		printf("Could not create socket\n");
+		printf("Could not create udp socket\n");
         exit(1);
 	}
 
-    
+    if (-1 == (tcp=socket(AF_INET, SOCK_STREAM, 0)))
+	{
+		printf("Could not create tcp socket\n");
+        exit(1);
+	}
+
     
     broadcast_address.s_addr = 0xffffffff;
     memset((char *) &si_broadcast, 0, sizeof(si_broadcast));
     si_broadcast.sin_family = AF_INET;
     si_broadcast.sin_addr = broadcast_address;
-    si_broadcast.sin_port = PORT;
+    si_broadcast.sin_port = htons(PORT);
      // broadcast address
 
     int broadcastEnable=1;
@@ -222,17 +235,23 @@ int main(int argc, char *argv[])
     si_me.sin_port = htons(PORT);
     si_me.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    if (-1 == bind(s , (struct sockaddr*)&si_me, sizeof(si_me) ))
+    if (-1 == bind(tcp , (struct sockaddr*)&si_me, sizeof(si_me) ))
 	{
 		printf("could not bind to port - maybe in use?\n");
         exit(1);
 	}
     
+    if ((listen(tcp, 1)) != 0) { 
+        printf("Listen failed...\n"); 
+        exit(0); 
+    } 
 
 
 
     char data[11] = { 
-
+        // lift control
+     //   0x8f, 0x01,0x0c, 0x01,
+     //   0xb0, 0x00,0x5d
     };
 
     ptrace(PTRACE_ATTACH, pid_to_hook, NULL, NULL);
@@ -240,17 +259,32 @@ int main(int argc, char *argv[])
     ptrace(PTRACE_SETOPTIONS, pid_to_hook, NULL, (void *)PTRACE_O_TRACESYSGOOD);
     
     printf("starting worker loop\n");
-
-    sfds[0].fd = s;
+    int addresslen = sizeof(si_me);
+    sfds[0].fd = tcp;
     sfds[0].events = POLLIN;
     while (1){
         t_result = clock_gettime(CLOCK_MONOTONIC, &tp_current);
-        poll_result = poll(sfds,1,1);
+        poll_result = poll(sfds,2,1);
         if (sfds[0].revents & POLLIN){
-            if ((recv_len = recvfrom(s, &data, sizeof(data), 0, (struct sockaddr *) &si_other, &slen)) == -1)
-            {
-                printf("udp rx issue? maybe too long?\n");
+            printf("client connected\n");
+            connfd = accept(tcp, (struct sockaddr*)&si_me, (socklen_t*)&addresslen); 
+            sfds[1].fd = connfd;
+            sfds[1].events = POLLIN;
+            // if ((recv_len = recvfrom(s, &data, sizeof(data), 0, (struct sockaddr *) &si_other, &slen)) == -1)
+            // {
+            //     printf("udp rx issue? maybe too long?\n");
+            // } else {
+            //     send_bus(data, recv_len);
+            // }
+        }
+        if (sfds[1].revents & POLLIN){
+            printf("something on client socket\n");
+            if ((recv_len = read( sfds[1].fd , &data, sizeof(data))) == 0){
+                printf("tcp close\n");
+                close( sfds[1].fd );
+                sfds[1].events = 0;
             } else {
+                printf("tcp send\n");
                 send_bus(data, recv_len);
             }
         }
