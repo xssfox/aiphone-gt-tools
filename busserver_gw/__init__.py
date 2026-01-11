@@ -49,7 +49,7 @@ class MqttClient():
         print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
         if msg.topic == f"aiphone-{self.resident_address}/command":
             data = json.loads(msg.payload.decode())
-            self.client.publish(f"aiphone-{self.resident_address}/availability","offline",2,True)
+            #self.client.publish(f"aiphone-{self.resident_address}/availability","offline",2,True)
             if data['type'] == "entrance":
                 self.entrance_callback(int(data['entrance']))
             if data['type'] == "lift":
@@ -58,7 +58,7 @@ class MqttClient():
                 self.remote_callback(int(data['section']),int(data['entrance']))
             if data['type'] == 'unlock':
                 self.unlock_callback()
-            self.client.publish(f"aiphone-{self.resident_address}/availability","online",2,True)
+            #self.client.publish(f"aiphone-{self.resident_address}/availability","online",2,True)
 
     def send_update(self, lineinuse):
         TOPIC = f"aiphone-{self.resident_address}/state"
