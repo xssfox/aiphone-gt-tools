@@ -78,6 +78,9 @@ class MqttClient():
                 "to_address": to_address
             }
         ))
+    def send_message(self,message):
+        TOPIC = f"aiphone-{self.resident_address}/message"
+        self.client.publish(TOPIC,message)
     def send_discovery(self):
         TOPIC = f"homeassistant/device/aiphone-{self.resident_address}/config"
         config = {
@@ -103,6 +106,12 @@ class MqttClient():
                         "payload_on": "inuse",
                         "payload_off": "free",
                         "value_template":"{{ value_json.line }}",
+                    },
+                    "last_message": {
+                        "p": "sensor",
+                        "unique_id":"lastmessage",
+                        "name": "Last Message",
+                        "state_topic": f"aiphone-{self.resident_address}/message",
                     },
                     "call": {
                         "p": "event",

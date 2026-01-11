@@ -61,7 +61,6 @@ def send_aiphone_packet(packet: Packet):
         logging.error(f"Failed to detect send. Attempt: {x+1}/{MAX_SEND_RETRIES}")
     raise TimeoutError("Failed to send onto bus")
 
-
 def recv_aiphone_packet():
     try:
         message = tcp_socket.recv(24)
@@ -71,6 +70,8 @@ def recv_aiphone_packet():
             message = message[13:]
             try:
                 packet = Packet.from_bytes(message)
+                if packet.cmd != CommandType.SYSTEM_INFO_2: #ignore system info 2 to prevent filling up home assistant with spam
+                    mqtt.send_message(f"{packet.from_type.name}:{packet.from_address} {packet.cmd.name}")
                 if packet.to_address == args.resident_address and packet.to_type == AddressType.RESIDENT:
                     logging.info(packet)
                 else:
