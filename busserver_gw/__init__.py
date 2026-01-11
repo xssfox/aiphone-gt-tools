@@ -17,12 +17,13 @@ class MqttClient():
         self.lift_callback = lift_callback
         self.remote_callback = remote_callback
         self.unlock_callback = unlock_callback
-        self.connect_mqtt(broker, port, username, password)
-        self.client.loop_start()
         self.resident_address = resident_address
         self.entrance = entrance
         self.remote_entrance = remote_entrance
         self.lifts = lifts
+        self.connect_mqtt(broker, port, username, password)
+        self.client.loop_start()
+
     def connect_mqtt(self, broker, port, username, password):
         def on_connect(client, userdata, flags, rc):
             if rc == 0:
